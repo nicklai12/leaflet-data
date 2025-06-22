@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>即時車輛追蹤（SSE 範例）</title>
+  <title>遠端 SSE 即時車輛追蹤</title>
 
   <!-- Leaflet CSS -->
   <link
@@ -11,12 +11,10 @@
     href="https://unpkg.com/leaflet/dist/leaflet.css"
   />
   <style>
-    /* 讓地圖全頁顯示 */
     html, body, #map {
       width: 100%;
       height: 100%;
-      margin: 0;
-      padding: 0;
+      margin: 0; padding: 0;
     }
   </style>
 </head>
@@ -26,21 +24,21 @@
   <!-- Leaflet JS -->
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
-    // 1. 初始化地圖並定位到台北
+    // 1. 初始化地圖
     const map = L.map('map').setView([25.038, 121.5645], 13);
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // 2. 建立一個移動中的車輛標記
+    // 2. 建立車輛標記
     const carMarker = L.marker([25.038, 121.5645]).addTo(map);
 
-    // 3. 透過 SSE 連接後端推送
-    const evtSource = new EventSource('/api/sse');
+    // 3. 使用絕對 URL 連接 SSE 端點
+    const evtSource = new EventSource('https://leftlet-data.vercel.app/api/sse');
+
     evtSource.onmessage = (e) => {
       try {
         const data = JSON.parse(e.data);
-        // 更新標記位置
         carMarker.setLatLng([data.lat, data.lng]);
       } catch (err) {
         console.error('解析 SSE 資料失敗', err);
@@ -48,8 +46,9 @@
     };
 
     evtSource.onerror = (err) => {
-      console.error('SSE 連線發生錯誤', err);
-      evtSource.close();
+      console.error('SSE 連線錯誤', err);
+      // 若需要，可在這裡重試或關閉連線
+      // evtSource.close();
     };
   </script>
 </body>
