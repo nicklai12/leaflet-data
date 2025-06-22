@@ -3,14 +3,21 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>多車輛 SSE 追蹤</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+  <title>遠端 SSE 多車輛追蹤</title>
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet/dist/leaflet.css"
+  />
   <style>
-    html, body, #map { width:100%; height:100%; margin:0; padding:0; }
+    html, body, #map {
+      width: 100%; height: 100%;
+      margin: 0; padding: 0;
+    }
   </style>
 </head>
 <body>
   <div id="map"></div>
+
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script>
     // 1. 初始化地圖
@@ -19,23 +26,24 @@
       attribution: '&copy; OpenStreetMap contributors'
     }).addTo(map);
 
-    // 2. 用一個 Map<carId, marker> 來管理所有車輛標記
+    // 2. 建立一個 Map 物件來管理多個車 marker
     const markers = new Map();
 
-    // 3. 建立 SSE 連線到遠端端點
+    // 3. 連到遠端的 SSE 端點
     const evtSource = new EventSource('https://leftlet-data.vercel.app/api/sse');
 
-    evtSource.onmessage = e => {
+    evtSource.onmessage = (e) => {
       try {
-        const cars = JSON.parse(e.data);  // cars 是一個陣列
+        const cars = JSON.parse(e.data);  // 每秒收到的是車輛陣列
         cars.forEach(({ carId, lat, lng }) => {
           if (markers.has(carId)) {
-            // 已存在：只更新座標
+            // 已有 marker，只更新位置
             markers.get(carId).setLatLng([lat, lng]);
           } else {
-            // 不存在：新建一個 Marker 並加到地圖
-            const m = L.marker([lat, lng]).addTo(map)
-              .bindPopup(`車輛：${carId}`);
+            // 第一次見到，創建 marker 並加入地圖、Map
+            const m = L.marker([lat, lng])
+                         .addTo(map)
+                         .bindPopup(`車輛：${carId}`);
             markers.set(carId, m);
           }
         });
@@ -44,9 +52,10 @@
       }
     };
 
-    evtSource.onerror = err => {
+    evtSource.onerror = (err) => {
       console.error('SSE 連線錯誤', err);
-      // evtSource.close();
+      // 如果需要可以自動重連：
+      // setTimeout(() => evtSource = new EventSource(evtSource.url), 3000);
     };
   </script>
 </body>
