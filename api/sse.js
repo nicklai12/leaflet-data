@@ -1,13 +1,6 @@
 // api/sse.js
 export default function handler(req, res) {
-  // 1. CORS：允許任意網域
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
-  if (req.method === 'OPTIONS') {
-    // preflight
-    return res.status(200).end();
-  }
+  // 1. CORS 相關的程式碼已移除，交給 vercel.json 處理
 
   // 2. SSE 必要的 header
   res.setHeader('Content-Type', 'text/event-stream');
@@ -23,6 +16,12 @@ export default function handler(req, res) {
 
   // 4. 每秒更新並推送整個陣列
   const sendData = () => {
+    // 確保連線仍然存在
+    if (res.writableEnded) {
+      clearInterval(timer);
+      return;
+    }
+    
     const updated = cars.map(c => ({
       carId: c.carId,
       lat: c.lat + (Math.random() - 0.5) * 0.005,
@@ -32,6 +31,9 @@ export default function handler(req, res) {
   };
   const timer = setInterval(sendData, 1000);
 
-  // 5. 客戶端斷開就清除
-  req.on('close', () => clearInterval(timer));
+  // 5. 客戶端斷開就清除計時器
+  req.on('close', () => {
+    clearInterval(timer);
+    res.end(); // 確保連線被正確關閉
+  });
 }
