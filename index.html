@@ -30,7 +30,7 @@
     const markers = new Map();
 
     // 3. 連到遠端的 SSE 端點
-    const evtSource = new EventSource('https://leftlet-data.vercel.app/api/sse');
+    const evtSource = new EventSource('https://leaflet-data.vercel.app/api/sse');
 
     evtSource.onmessage = (e) => {
       try {
